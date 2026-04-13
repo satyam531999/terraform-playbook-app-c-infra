@@ -1,0 +1,216 @@
+name: App Image CI
+
+on:
+  push:
+    branches:
+      - main
+      - feature/**
+    paths:
+      - app/**
+      - .github/workflows/app-image.yml
+  pull_request:
+    paths:
+      - app/**
+      - .github/workflows/app-image.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  APP_REPO_PATH: terraform-playbook-app-c-infra
+  MODULES_REPO_PATH: terraform-playbook-modules
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: observable-demo-app
+  TERRAFORM_VERSION: 1.7.5
+
+jobs:
+  app_checks:
+    name: App Install and Build Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.APP_REPO_PATH }}/app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.APP_REPO_PATH }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: ${{ env.APP_REPO_PATH }}/app/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Verify Server Syntax
+        run: node --check server.js
+
+      - name: Build Docker Image Locally
+        run: docker build -t observable-demo-app:ci .
+
+  publish_image:
+    if: github.event_name != 'pull_request'
+    name: Publish Image to ECR
+    runs-on: ubuntu-latest
+    needs: app_checks
+    outputs:
+      image_uri: ${{ steps.build_push.outputs.image_uri }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.APP_REPO_PATH }}
+
+      - name: Compute Image Tag
+        id: compute_tag
+        run: |
+          APP_VERSION=$(node -p "require('./${{ env.APP_REPO_PATH }}/app/package.json').version")
+          SHORT_SHA=$(printf '%.7s' "$GITHUB_SHA")
+          echo "image_tag=${APP_VERSION}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION || env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login_ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Ensure ECR Repository Exists
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION || env.AWS_REGION }}
+        run: |
+          aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" --region "$AWS_REGION" >/dev/null 2>&1 || \
+          aws ecr create-repository --repository-name "$ECR_REPOSITORY" --region "$AWS_REGION"
+
+      - name: Build and Push Image
+        id: build_push
+        working-directory: ${{ env.APP_REPO_PATH }}/app
+        env:
+          REGISTRY: ${{ steps.login_ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.compute_tag.outputs.image_tag }}
+        run: |
+          IMAGE_URI="$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker build -t "$IMAGE_URI" .
+          docker push "$IMAGE_URI"
+          echo "image_uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Image Metadata
+        run: printf '%s\n' "${{ steps.build_push.outputs.image_uri }}" > image-uri.txt
+
+      - name: Publish Image Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-uri
+          path: image-uri.txt
+
+  deploy_dev:
+    if: github.event_name != 'pull_request'
+    name: Deploy Image to Dev
+    runs-on: ubuntu-latest
+    environment: dev
+    needs: publish_image
+    defaults:
+      run:
+        working-directory: ${{ env.APP_REPO_PATH }}/environments/dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.APP_REPO_PATH }}
+
+      - name: Checkout Shared Terraform Modules
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.TF_MODULES_REPOSITORY }}
+          ref: ${{ vars.TF_MODULES_REF }}
+          token: ${{ secrets.CI_REPO_READ_TOKEN || github.token }}
+          path: ${{ env.MODULES_REPO_PATH }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION || env.AWS_REGION }}
+
+      - name: Resolve Published Image URI
+        id: resolve_image
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION || env.AWS_REGION }}
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          APP_VERSION=$(node -p "require('../../app/package.json').version")
+          SHORT_SHA=$(printf '%.7s' "$GITHUB_SHA")
+          IMAGE_TAG="${APP_VERSION}-${SHORT_SHA}"
+          IMAGE_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}"
+          aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="$IMAGE_TAG" --region "$AWS_REGION" >/dev/null
+          echo "image_uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+          echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Generate Backend Config
+        run: |
+          cat > backend.hcl << EOF
+          bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          key            = "terraform/aws-prod-lab/dev/terraform.tfstate"
+          region         = "${{ secrets.AWS_REGION || env.AWS_REGION }}"
+          dynamodb_table = "${{ secrets.TF_LOCK_TABLE }}"
+          encrypt        = true
+          EOF
+
+      - name: Terraform Init
+        run: terraform init -backend-config=backend.hcl -reconfigure
+
+      - name: Terraform Plan Dev Image Rollout
+        env:
+          IMAGE_URI: ${{ steps.resolve_image.outputs.image_uri }}
+        run: |
+          test -n "$IMAGE_URI"
+          terraform plan -input=false -out=tfplan -var="container_image=${IMAGE_URI}"
+
+      - name: Terraform Apply Dev Image Rollout
+        run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Export Applied Plan Text
+        run: terraform show -no-color tfplan > applied-plan.txt
+
+      - name: Upload Dev Deploy Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-image-rollout-plan
+          path: ${{ env.APP_REPO_PATH }}/environments/dev/applied-plan.txt
+
+      - name: Verify Dev Health Endpoint
+        env:
+          EXPECTED_APP_VERSION: ${{ steps.resolve_image.outputs.image_tag }}
+        run: |
+          ALB_DNS=$(terraform output -raw alb_dns_name)
+
+          for attempt in $(seq 1 20); do
+            RESPONSE=$(curl -fsS "http://$ALB_DNS/health") && STATUS=0 || STATUS=$?
+
+            if [ "$STATUS" -eq 0 ]; then
+              echo "$RESPONSE"
+
+              if echo "$RESPONSE" | grep -q "\"appVersion\":\"$EXPECTED_APP_VERSION\""; then
+                exit 0
+              fi
+            fi
+
+            sleep 15
+          done
+
+          echo "Timed out waiting for dev rollout to serve appVersion=$EXPECTED_APP_VERSION"
+          exit 1
