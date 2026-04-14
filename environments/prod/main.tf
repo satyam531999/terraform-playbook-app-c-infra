@@ -1,5 +1,5 @@
 module "network" {
-  source = "git::ssh://git@github-personal/satyam531999/terraform-playbook-modules.git//modules/network?ref=v0.1.0"
+  source = "../../../terraform-playbook-modules/modules/network"
 
   name_prefix          = var.name_prefix
   vpc_cidr             = var.vpc_cidr
@@ -9,7 +9,7 @@ module "network" {
 }
 
 module "compute" {
-  source = "git::ssh://git@github-personal/satyam531999/terraform-playbook-modules.git//modules/ecs_service?ref=v0.1.0"
+  source = "../../../terraform-playbook-modules/modules/ecs_service"
 
   name_prefix        = var.name_prefix
   aws_region         = var.aws_region
@@ -25,7 +25,7 @@ module "compute" {
 }
 
 module "telemetry" {
-  source = "git::ssh://git@github-personal/satyam531999/terraform-playbook-modules.git//modules/telemetry?ref=v0.1.0"
+  source = "../../../terraform-playbook-modules/modules/telemetry"
 
   name_prefix                   = var.name_prefix
   aws_region                    = var.aws_region
@@ -38,7 +38,7 @@ module "telemetry" {
 }
 
 module "rollout" {
-  source = "git::ssh://git@github-personal/satyam531999/terraform-playbook-modules.git//modules/rollout?ref=v0.1.0"
+  source = "../../../terraform-playbook-modules/modules/rollout"
 
   name_prefix                    = var.name_prefix
   environment_name               = "prod"
@@ -51,7 +51,7 @@ module "rollout" {
 
 module "dynatrace" {
   count  = var.enable_dynatrace ? 1 : 0
-  source = "git::ssh://git@github-personal/satyam531999/terraform-playbook-modules.git//modules/dynatrace_integration?ref=v0.1.0"
+  source = "../../../terraform-playbook-modules/modules/dynatrace_integration"
 
   name_prefix               = var.name_prefix
   dynatrace_aws_account_arn = var.dynatrace_aws_account_arn
