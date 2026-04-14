@@ -109,8 +109,13 @@ This repo includes a minimal Monaco scaffold under `dynatrace/` so Dynatrace das
 
 Required repository secrets for Monaco:
 
-- `DYNATRACE_ENV_URL`: Dynatrace environment base URL, for example `https://tsc94425.apps.dynatrace.com`
+- `DYNATRACE_ENV_URL`: Dynatrace environment base URL, for example `https://tsc94425.live.dynatrace.com`
 - `DYNATRACE_API_TOKEN`: Dynatrace API token with dashboard/config deployment scopes
+
+URL note:
+
+- Monaco uses the Dynatrace environment base URL without `/api`.
+- Terraform variable `dynatrace_api_url` uses the environment API URL with `/api`.
 
 Current Monaco baseline:
 

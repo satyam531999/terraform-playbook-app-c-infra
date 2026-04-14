@@ -18,7 +18,12 @@ Use this checklist before running workflows in `terraform-playbook-app-c-infra`.
 
 - `CI_REPO_READ_TOKEN`: only required if the modules repo cannot be read with the default workflow token
 - `DYNATRACE_API_TOKEN`: Dynatrace API token used as `TF_VAR_dynatrace_api_token` during Terraform plan/apply/destroy
-- `DYNATRACE_ENV_URL`: Dynatrace environment base URL used by Monaco, for example `https://tsc94425.apps.dynatrace.com`
+- `DYNATRACE_ENV_URL`: Dynatrace environment base URL used by Monaco, for example `https://tsc94425.live.dynatrace.com`
+
+URL note:
+
+- `DYNATRACE_ENV_URL` for Monaco should not include `/api`.
+- `dynatrace_api_url` in Terraform tfvars should include `/api`.
 
 ## Recommended GitHub Environments
 
