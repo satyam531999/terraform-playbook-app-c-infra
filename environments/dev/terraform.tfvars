@@ -1,7 +1,7 @@
 aws_region      = "us-east-1"
 name_prefix     = "prodlab-dev"
 desired_count   = 1
-container_image = "140023367958.dkr.ecr.us-east-1.amazonaws.com/observable-demo-app:1.0.0-23da6fa"
+container_image = "140023367958.dkr.ecr.us-east-1.amazonaws.com/observable-demo-app:1.0.1-90391c6"
 
 # Dynatrace integration values
 enable_dynatrace          = true
