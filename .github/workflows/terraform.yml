@@ -104,6 +104,8 @@ jobs:
     strategy:
       matrix:
         target_env: ["dev", "prod"]
+    env:
+      TF_VAR_dynatrace_api_token: ${{ secrets.DYNATRACE_API_TOKEN || '' }}
     defaults:
       run:
         working-directory: ${{ env.APP_REPO_PATH }}/environments/${{ matrix.target_env }}
@@ -162,6 +164,8 @@ jobs:
     name: Manual Plan (${{ inputs.target_env }})
     runs-on: ubuntu-latest
     environment: ${{ inputs.target_env }}
+    env:
+      TF_VAR_dynatrace_api_token: ${{ secrets.DYNATRACE_API_TOKEN || '' }}
     defaults:
       run:
         working-directory: ${{ env.APP_REPO_PATH }}/environments/${{ inputs.target_env }}
@@ -220,6 +224,8 @@ jobs:
     name: Manual Apply (${{ inputs.target_env }})
     runs-on: ubuntu-latest
     environment: ${{ inputs.target_env }}
+    env:
+      TF_VAR_dynatrace_api_token: ${{ secrets.DYNATRACE_API_TOKEN || '' }}
     defaults:
       run:
         working-directory: ${{ env.APP_REPO_PATH }}/environments/${{ inputs.target_env }}
@@ -281,6 +287,8 @@ jobs:
     name: Manual Destroy (${{ inputs.target_env }})
     runs-on: ubuntu-latest
     environment: ${{ inputs.target_env }}
+    env:
+      TF_VAR_dynatrace_api_token: ${{ secrets.DYNATRACE_API_TOKEN || '' }}
     defaults:
       run:
         working-directory: ${{ env.APP_REPO_PATH }}/environments/${{ inputs.target_env }}

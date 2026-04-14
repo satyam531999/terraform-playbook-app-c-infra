@@ -90,6 +90,19 @@ Make that change only after:
 - `prod` remains intended for controlled promotion.
 - Workflow artifact paths are now aligned with the standalone checkout layout used in CI.
 
+## Dynatrace Setup
+
+Dynatrace integration is enabled for `dev` through `environments/dev/terraform.tfvars`.
+
+To apply safely without committing secrets:
+
+1. Add repository or environment secret `DYNATRACE_API_TOKEN`.
+2. Run `Terraform CI CD` with `action=plan`, `target_env=dev` and confirm the Dynatrace resources in plan.
+3. Run `Terraform CI CD` with `action=apply`, `target_env=dev`.
+4. In Dynatrace AWS integration, use output `dynatrace_integration_role_arn` from the `dev` stack role.
+
+For local CLI runs, export `TF_VAR_dynatrace_api_token` before Terraform plan/apply.
+
 ## Reference Notes
 
 - Spinnaker reference material is preserved under `docs/` only.

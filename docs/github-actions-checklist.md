@@ -17,6 +17,7 @@ Use this checklist before running workflows in `terraform-playbook-app-c-infra`.
 ## Optional Secret
 
 - `CI_REPO_READ_TOKEN`: only required if the modules repo cannot be read with the default workflow token
+- `DYNATRACE_API_TOKEN`: Dynatrace API token used as `TF_VAR_dynatrace_api_token` during Terraform plan/apply/destroy
 
 ## Recommended GitHub Environments
 

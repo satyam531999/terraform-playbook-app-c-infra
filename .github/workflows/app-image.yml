@@ -118,6 +118,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
     needs: publish_image
+    env:
+      TF_VAR_dynatrace_api_token: ${{ secrets.DYNATRACE_API_TOKEN || '' }}
     defaults:
       run:
         working-directory: ${{ env.APP_REPO_PATH }}/environments/dev
