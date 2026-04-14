@@ -103,6 +103,28 @@ To apply safely without committing secrets:
 
 For local CLI runs, export `TF_VAR_dynatrace_api_token` before Terraform plan/apply.
 
+## Dynatrace Monaco
+
+This repo includes a minimal Monaco scaffold under `dynatrace/` so Dynatrace dashboards can be version-controlled and deployed from GitHub Actions instead of being created only through the UI.
+
+Required repository secrets for Monaco:
+
+- `DYNATRACE_ENV_URL`: Dynatrace environment base URL, for example `https://tsc94425.apps.dynatrace.com`
+- `DYNATRACE_API_TOKEN`: Dynatrace API token with dashboard/config deployment scopes
+
+Current Monaco baseline:
+
+- `dynatrace/manifest.yaml`: Monaco manifest for the `dev` environment
+- `dynatrace/projects/golden-signals/dashboard/`: starter dashboard project
+- `.github/workflows/dynatrace-config.yml`: workflow to validate or deploy Dynatrace config
+
+Suggested flow:
+
+1. Add `DYNATRACE_ENV_URL` if not already configured.
+2. Run `Dynatrace Config CI CD` with `action=validate`.
+3. Run `Dynatrace Config CI CD` with `action=deploy`.
+4. Replace the starter dashboard JSON with exported or refined dashboard tiles as your golden-signal dashboard evolves.
+
 ## Reference Notes
 
 - Spinnaker reference material is preserved under `docs/` only.

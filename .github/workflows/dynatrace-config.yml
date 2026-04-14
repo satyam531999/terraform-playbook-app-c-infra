@@ -1,0 +1,92 @@
+name: Dynatrace Config CI CD
+
+on:
+  push:
+    branches:
+      - main
+      - feature/**
+    paths:
+      - dynatrace/**
+      - .github/workflows/dynatrace-config.yml
+  pull_request:
+    paths:
+      - dynatrace/**
+      - .github/workflows/dynatrace-config.yml
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Choose Monaco action"
+        required: true
+        type: choice
+        options:
+          - validate
+          - deploy
+      target_env:
+        description: "Dynatrace environment"
+        required: true
+        type: choice
+        options:
+          - dev
+      project:
+        description: "Monaco project to run"
+        required: true
+        type: string
+        default: golden-signals
+
+permissions:
+  contents: read
+
+jobs:
+  monaco_validate:
+    if: github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.action == 'validate')
+    name: Monaco Validate (${{ github.event_name == 'workflow_dispatch' && inputs.target_env || 'dev' }})
+    runs-on: ubuntu-latest
+    env:
+      DYNATRACE_ENV_URL: ${{ secrets.DYNATRACE_ENV_URL }}
+      DYNATRACE_API_TOKEN: ${{ secrets.DYNATRACE_API_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install Monaco
+        run: go install github.com/Dynatrace/dynatrace-configuration-as-code/v2/cmd/monaco@latest
+
+      - name: Monaco Dry Run
+        run: |
+          "$HOME/go/bin/monaco" deploy dynatrace/manifest.yaml \
+            --environment "${{ github.event_name == 'workflow_dispatch' && inputs.target_env || 'dev' }}" \
+            --project "${{ github.event_name == 'workflow_dispatch' && inputs.project || 'golden-signals' }}" \
+            --dry-run \
+            --verbose
+
+  monaco_deploy:
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'deploy'
+    name: Monaco Deploy (${{ inputs.target_env }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_env }}
+    env:
+      DYNATRACE_ENV_URL: ${{ secrets.DYNATRACE_ENV_URL }}
+      DYNATRACE_API_TOKEN: ${{ secrets.DYNATRACE_API_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install Monaco
+        run: go install github.com/Dynatrace/dynatrace-configuration-as-code/v2/cmd/monaco@latest
+
+      - name: Monaco Deploy
+        run: |
+          "$HOME/go/bin/monaco" deploy dynatrace/manifest.yaml \
+            --environment "${{ inputs.target_env }}" \
+            --project "${{ inputs.project }}" \
+            --verbose

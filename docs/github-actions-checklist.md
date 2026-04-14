@@ -18,6 +18,7 @@ Use this checklist before running workflows in `terraform-playbook-app-c-infra`.
 
 - `CI_REPO_READ_TOKEN`: only required if the modules repo cannot be read with the default workflow token
 - `DYNATRACE_API_TOKEN`: Dynatrace API token used as `TF_VAR_dynatrace_api_token` during Terraform plan/apply/destroy
+- `DYNATRACE_ENV_URL`: Dynatrace environment base URL used by Monaco, for example `https://tsc94425.apps.dynatrace.com`
 
 ## Recommended GitHub Environments
 
@@ -38,6 +39,7 @@ Run in this order:
 1. `Terraform CI CD` with `action=plan`, `target_env=dev`
 2. `App Image CI` on a branch push or `workflow_dispatch`
 3. `Terraform CI CD` with `action=plan`, `target_env=prod`
+4. `Dynatrace Config CI CD` with `action=validate`, `target_env=dev`, `project=golden-signals`
 
 ## Expected Behavior
 
@@ -45,3 +47,4 @@ Run in this order:
 - the app workflow builds and pushes `observable-demo-app`
 - the app workflow deploys only `dev`
 - `prod` stays under manual control
+- the Dynatrace workflow validates or deploys the Monaco project under `dynatrace/`

@@ -1,0 +1,14 @@
+manifestVersion: "1.0"
+projects:
+  - name: golden-signals
+    path: projects/golden-signals
+environmentGroups:
+  - name: default
+    environments:
+      - name: dev
+        url:
+          type: environment
+          value: DYNATRACE_ENV_URL
+        auth:
+          token:
+            name: DYNATRACE_API_TOKEN

@@ -1,0 +1,8 @@
+configs:
+  - id: prodlab-dev-golden-signals
+    config:
+      name: prodlab-dev-golden-signals
+      template: prodlab-dev-golden-signals.json
+      skip: false
+    type:
+      api: dashboard
