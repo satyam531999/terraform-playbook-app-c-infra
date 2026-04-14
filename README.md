@@ -68,8 +68,7 @@ The environment stacks now use Git-based module sources pointed at the shared mo
 Current bootstrap source pattern:
 
 ```hcl
-source = "git::ssh://git@github.com/satyam531999/terraform-playbook-modules.git//modules/ecs_service?ref=main"
-
+source = "git::ssh://git@github-personal/satyam531999/terraform-playbook-modules.git//modules/ecs_service?ref=v0.1.0"
 ```
 
 Recommended follow-up after the first tagged release:
@@ -95,3 +94,5 @@ Make that change only after:
 
 - Spinnaker reference material is preserved under `docs/` only.
 - Active deployment today is GitHub Actions plus Terraform.
+- See `docs/github-actions-checklist.md` for required repository variables and secrets.
+- See `docs/dev-recreation-plan.md` for the safe `dev` rebuild sequence from this split repo.
