@@ -21,6 +21,10 @@ module "compute" {
   desired_count      = var.desired_count
   cpu                = var.cpu
   memory             = var.memory
+  enable_oneagent_sidecar = var.enable_oneagent_sidecar && var.enable_dynatrace
+  dynatrace_secret_arn = var.enable_oneagent_sidecar && var.enable_dynatrace ? module.dynatrace[0].dynatrace_secret_arn : ""
+  dynatrace_api_url_parameter = var.enable_oneagent_sidecar && var.enable_dynatrace ? module.dynatrace[0].dynatrace_api_url_parameter : ""
+  oneagent_image     = var.oneagent_image
   tags               = var.tags
 }
 

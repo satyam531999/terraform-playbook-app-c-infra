@@ -105,6 +105,18 @@ variable "enable_dynatrace" {
   default     = false
 }
 
+variable "enable_oneagent_sidecar" {
+  type        = bool
+  description = "Enable Dynatrace OneAgent sidecar for ECS tasks"
+  default     = false
+}
+
+variable "oneagent_image" {
+  type        = string
+  description = "Container image for Dynatrace OneAgent sidecar"
+  default     = ""
+}
+
 variable "tags" {
   type = map(string)
   default = {
