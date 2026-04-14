@@ -54,7 +54,7 @@ jobs:
           go-version: '1.22'
 
       - name: Install Monaco
-        run: go install github.com/Dynatrace/dynatrace-configuration-as-code/v2/cmd/monaco@latest
+        run: go install github.com/dynatrace/dynatrace-configuration-as-code/v2/cmd/monaco@latest
 
       - name: Monaco Dry Run
         run: |
@@ -82,7 +82,7 @@ jobs:
           go-version: '1.22'
 
       - name: Install Monaco
-        run: go install github.com/Dynatrace/dynatrace-configuration-as-code/v2/cmd/monaco@latest
+        run: go install github.com/dynatrace/dynatrace-configuration-as-code/v2/cmd/monaco@latest
 
       - name: Monaco Deploy
         run: |
