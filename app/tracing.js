@@ -48,18 +48,31 @@ if (!token || !otlpEndpoint) {
     instrumentations: [getNodeAutoInstrumentations()],
   });
 
-  sdk
-    .start()
-    .then(() => {
+  try {
+    const startResult = sdk.start();
+
+    if (startResult && typeof startResult.then === "function") {
+      startResult
+        .then(() => {
+          logTelemetryEvent("INFO", "OpenTelemetry export enabled", {
+            endpoint: otlpEndpoint,
+          });
+        })
+        .catch((error) => {
+          logTelemetryEvent("ERROR", "OpenTelemetry startup failed", {
+            error: error.message,
+          });
+        });
+    } else {
       logTelemetryEvent("INFO", "OpenTelemetry export enabled", {
         endpoint: otlpEndpoint,
       });
-    })
-    .catch((error) => {
-      logTelemetryEvent("ERROR", "OpenTelemetry startup failed", {
-        error: error.message,
-      });
+    }
+  } catch (error) {
+    logTelemetryEvent("ERROR", "OpenTelemetry startup failed", {
+      error: error.message,
     });
+  }
 
   async function shutdown(signal) {
     try {
