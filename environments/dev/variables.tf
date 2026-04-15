@@ -105,16 +105,10 @@ variable "enable_dynatrace" {
   default     = false
 }
 
-variable "enable_oneagent_sidecar" {
+variable "enable_dynatrace_otel" {
   type        = bool
-  description = "Enable Dynatrace OneAgent sidecar for ECS tasks"
+  description = "Enable Dynatrace OTLP export for the ECS app container"
   default     = false
-}
-
-variable "oneagent_image" {
-  type        = string
-  description = "Container image for Dynatrace OneAgent sidecar"
-  default     = ""
 }
 
 variable "tags" {

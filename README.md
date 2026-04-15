@@ -103,6 +103,15 @@ To apply safely without committing secrets:
 
 For local CLI runs, export `TF_VAR_dynatrace_api_token` before Terraform plan/apply.
 
+The application uses OpenTelemetry to export traces and metrics directly to Dynatrace.
+
+Required runtime behavior:
+
+1. The Terraform apply must populate the `prodlab-dev/dynatrace/api-token` secret with a Dynatrace token that includes OTLP ingest scopes.
+2. The ECS task injects that secret into the app container as `DT_API_TOKEN`.
+3. The ECS task also injects `OTEL_EXPORTER_OTLP_ENDPOINT` using the Dynatrace environment URL converted to `/api/v2/otlp`.
+4. The Node.js app starts with `app/tracing.js`, which enables auto-instrumentation when both values are present.
+
 ## Reference Notes
 
 - Spinnaker reference material is preserved under `docs/` only.

@@ -21,10 +21,9 @@ module "compute" {
   desired_count      = var.desired_count
   cpu                = var.cpu
   memory             = var.memory
-  enable_oneagent_sidecar = var.enable_oneagent_sidecar && var.enable_dynatrace
-  dynatrace_secret_arn = var.enable_oneagent_sidecar && var.enable_dynatrace ? module.dynatrace[0].dynatrace_secret_arn : ""
-  dynatrace_api_url_parameter = var.enable_oneagent_sidecar && var.enable_dynatrace ? module.dynatrace[0].dynatrace_api_url_parameter : ""
-  oneagent_image     = var.oneagent_image
+  enable_dynatrace_otel = var.enable_dynatrace_otel && var.enable_dynatrace
+  dynatrace_secret_arn  = var.enable_dynatrace_otel && var.enable_dynatrace ? module.dynatrace[0].dynatrace_secret_arn : ""
+  dynatrace_otlp_endpoint = var.enable_dynatrace_otel && var.enable_dynatrace ? "${trimsuffix(var.dynatrace_api_url, "/api")}/api/v2/otlp" : ""
   tags               = var.tags
 }
 

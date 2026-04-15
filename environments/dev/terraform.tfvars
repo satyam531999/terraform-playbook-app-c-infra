@@ -11,10 +11,7 @@ dynatrace_external_id     = "vu9U3hXa3q0AAAABADJidWlsdGluOmh5cGVyc2NhbGVyLWF1dGh
 dynatrace_api_url         = "https://tsc94425.live.dynatrace.com/api"
 dynatrace_api_token       = ""
 
-# Phase 2: OneAgent sidecar (enabled for dev test).
-# OneAgent image: obtain from your Dynatrace environment's container registry or ECR public.
-# Format: <registry>/<image>:<tag>
-# Example: 763572687439.dkr.ecr.us-east-1.amazonaws.com/dynatrace-oneagent:latest
-# Or use Dynatrace public registry if available in your account.
-enable_oneagent_sidecar   = true
-oneagent_image            = "dynatrace/oneagent:latest"
+# Dynatrace application telemetry via OpenTelemetry.
+# The ECS task injects the Dynatrace token from Secrets Manager and exports to
+# ${dynatrace_api_url without /api}/api/v2/otlp.
+enable_dynatrace_otel     = true
